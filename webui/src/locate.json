@@ -42,7 +42,10 @@
       "empty": "No enabled modules found",
       "scanError": "Failed to scan modules",
       "saveSuccess": "Modes saved",
-      "saveFailed": "Failed to save modes"
+      "saveFailed": "Failed to save modes",
+      "searchPlaceholder": "Search modules...",
+      "filterLabel": "Filter:",
+      "filterAll": "All"
     },
     "logs": {
       "title": "System Logs",
@@ -99,7 +102,10 @@
       "empty": "未找到已启用的模块",
       "scanError": "扫描失败",
       "saveSuccess": "模式已保存",
-      "saveFailed": "保存失败"
+      "saveFailed": "保存失败",
+      "searchPlaceholder": "搜索模块...",
+      "filterLabel": "筛选:",
+      "filterAll": "全部"
     },
     "logs": {
       "title": "运行日志",
@@ -156,7 +162,10 @@
       "empty": "有効なモジュールが見つかりません",
       "scanError": "モジュールのスキャンに失敗しました",
       "saveSuccess": "モードを保存しました",
-      "saveFailed": "モードの保存に失敗しました"
+      "saveFailed": "モードの保存に失敗しました",
+      "searchPlaceholder": "モジュールを検索...",
+      "filterLabel": "フィルター:",
+      "filterAll": "すべて"
     },
     "logs": {
       "title": "システムログ",
@@ -200,7 +209,8 @@
       "loadError": "Ошибка загрузки конфига",
       "loadDefault": "Конфиг по умолчанию",
       "saveSuccess": "Успешно сохранено",
-      "saveFailed": "Ошибка сохранения"
+      "saveFailed": "Ошибка сохранения",
+      "partitions": "Разделы"
     },
     "modules": {
       "title": "Режимы модулей",
@@ -213,7 +223,10 @@
       "empty": "Активные модули не найдены",
       "scanError": "Ошибка сканирования модулей",
       "saveSuccess": "Режимы сохранены",
-      "saveFailed": "Ошибка сохранения режимов"
+      "saveFailed": "Ошибка сохранения режимов",
+      "searchPlaceholder": "Поиск модулей...",
+      "filterLabel": "Фильтр:",
+      "filterAll": "Все"
     },
     "logs": {
       "title": "Системные логи",
