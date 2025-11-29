@@ -4,7 +4,7 @@ mod core;
 mod defs;
 mod mount;
 mod utils;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use anyhow::Result;
 use clap::Parser;
 use rustix::mount::{unmount, UnmountFlags};
@@ -112,6 +112,8 @@ fn run() -> Result<()> {
     if let Err(e) = modules::sync_active(&config.moduledir, &mnt_base) {
         log::error!("Critical: Failed to sync modules: {:#}", e);
     }
+
+    // --- ARCHITECTURE REFACTOR: PLANNER & EXECUTOR ---
 
     // 4. Generate Mount Plan
     log::info!("Generating mount plan...");
