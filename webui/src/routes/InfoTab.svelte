@@ -13,31 +13,28 @@
   let contributors = $state([]);
   let loading = $state(true);
   let error = $state(false);
-
   onMount(async () => {
     await fetchContributors();
   });
-
   async function fetchContributors() {
     try {
       const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contributors`);
       if (!res.ok) throw new Error('Failed to fetch list');
       
       const basicList = await res.json();
-
       const filteredList = basicList.filter(user => {
         const isBotType = user.type === 'Bot';
         const hasBotName = user.login.toLowerCase().includes('bot');
         return !isBotType && !hasBotName;
       });
-
       const detailPromises = filteredList.map(async (user) => {
         try {
             const detailRes = await fetch(user.url);
             if (detailRes.ok) {
                 const detail = await detailRes.json();
                 return { ...user, bio: detail.bio, name: detail.name || user.login };
-            }
+          
+          }
         } catch (e) {
             console.warn('Failed to fetch detail for', user.login);
         }
@@ -62,7 +59,34 @@
   
   <div class="project-header">
     <div class="app-logo">
-        <svg viewBox="0 0 24 24" width="32" height="32"><path d={ICONS.home} fill="currentColor"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+        <desc>Hybrid Mount Logo (Monet)</desc>
+        <g transform="translate(200, 220)">
+          
+          <g>
+            <rect x="-145" y="20" width="290" height="70" rx="16" ry="16" fill="var(--md-sys-color-surface-variant)" />
+            <text x="0" y="65" font-family="var(--md-ref-typeface-mono)" font-size="28" font-weight="bold" fill="var(--md-sys-color-on-surface-variant)" text-anchor="middle" letter-spacing="1">/system</text>
+          </g>
+      
+          <g transform="translate(-115, -95)">
+            <defs>
+              <clipPath id="logoBlockClip">
+                <rect x="0" y="0" width="100" height="100" rx="16" ry="16" />
+              </clipPath>
+            </defs>
+            <rect x="0" y="0" width="100" height="100" rx="16" ry="16" fill="var(--md-sys-color-primary-container)" />
+            <g clip-path="url(#logoBlockClip)">
+              <rect x="0" y="0" width="50" height="50" fill="var(--md-sys-color-primary)" />
+              <rect x="50" y="50" width="50" height="50" fill="var(--md-sys-color-primary)" />
+            </g>
+          </g>
+      
+          <g transform="translate(15, -95)">
+            <rect x="0" y="0" width="100" height="100" rx="16" ry="16" fill="var(--md-sys-color-tertiary-container)" />
+          </g>
+      
+        </g>
+      </svg>
     </div>
     <span class="app-name">{store.L.common.appName}</span>
     <span class="app-version">{store.version}</span>
@@ -94,7 +118,7 @@
                     <Skeleton width="48px" height="48px" borderRadius="50%" />
                     <div class="c-info">
                         <div class="skeleton-spacer">
-                             <Skeleton width="120px" height="16px" />
+                            <Skeleton width="120px" height="16px" />
                         </div>
                         <Skeleton width="200px" height="12px" />
                     </div>
