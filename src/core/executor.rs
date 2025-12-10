@@ -7,7 +7,7 @@ use crate::{
     conf::config, 
     mount::{magic, overlay, hymofs::HymoFs}, 
     utils,
-    core::planner::{MountPlan, OverlayOperation}
+    core::planner::MountPlan
 };
 
 pub struct ExecutionResult {
@@ -17,6 +17,7 @@ pub struct ExecutionResult {
 }
 
 pub enum DiagnosticLevel {
+    #[allow(dead_code)]
     Info,
     Warning,
     Critical,

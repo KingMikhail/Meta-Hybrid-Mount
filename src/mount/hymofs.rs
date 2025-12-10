@@ -125,7 +125,7 @@ impl HymoFs {
         }
         Ok(())
     }
-
+#[allow(dead_code)]
     pub fn delete_directory_rules(target_base: &Path, module_dir: &Path) -> Result<()> {
         if !module_dir.exists() || !module_dir.is_dir() {
             return Ok(());

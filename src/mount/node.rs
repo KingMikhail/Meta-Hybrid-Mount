@@ -108,6 +108,12 @@ impl Node {
             let path = entry.path();
             let relative_path = path.strip_prefix(root)?;
             let module_file = ModuleFile::new(root, relative_path)?;
+            
+            // Skip .replace files themselves from being added as nodes
+            if module_file.is_replace_file {
+                continue;
+            }
+
             self.add_module_file(module_file);
         }
         Ok(())
