@@ -60,6 +60,7 @@ struct HymoIoctlArg {
 }
 
 fn ioc_add_rule() -> libc::c_int { _IOW!(HYMO_IOC_MAGIC as u32, 1, HymoIoctlArg) as libc::c_int }
+#[allow(dead_code)]
 fn ioc_del_rule() -> libc::c_int { _IOW!(HYMO_IOC_MAGIC as u32, 2, HymoIoctlArg) as libc::c_int }
 fn ioc_hide_rule() -> libc::c_int { _IOW!(HYMO_IOC_MAGIC as u32, 3, HymoIoctlArg) as libc::c_int }
 fn ioc_inject_rule() -> libc::c_int { _IOW!(HYMO_IOC_MAGIC as u32, 4, HymoIoctlArg) as libc::c_int }
@@ -175,6 +176,7 @@ pub enum HymoFsStatus {
 pub struct HymoFs;
 
 impl HymoFs {
+    #[allow(dead_code)]
     pub fn get_version() -> Option<i32> {
         let driver = HymoDriver::new().ok()?;
         driver.get_version().ok()
