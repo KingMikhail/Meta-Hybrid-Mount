@@ -1,20 +1,76 @@
-use std::fs::{self, File, OpenOptions};
-use std::io::{BufWriter, Write};
-use std::os::unix::fs::{FileTypeExt, MetadataExt};
+use std::ffi::CString;
+use std::fs::{File, OpenOptions};
+use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use log::{debug, warn};
 use walkdir::WalkDir;
 
-const HYMO_CTL: &str = "/proc/hymo_ctl";
-const EXPECTED_PROTOCOL_VERSION: i32 = 3;
+const DEV_PATH: &str = "/dev/hymo_ctl";
+const HYMO_IOC_MAGIC: u8 = 0xE0;
+const EXPECTED_PROTOCOL_VERSION: i32 = 4;
+
+const _IOC_NRBITS: u32 = 8;
+const _IOC_TYPEBITS: u32 = 8;
+const _IOC_SIZEBITS: u32 = 14;
+const _IOC_DIRBITS: u32 = 2;
+
+const _IOC_NRSHIFT: u32 = 0;
+const _IOC_TYPESHIFT: u32 = _IOC_NRSHIFT + _IOC_NRBITS;
+const _IOC_SIZESHIFT: u32 = _IOC_TYPESHIFT + _IOC_TYPEBITS;
+const _IOC_DIRSHIFT: u32 = _IOC_SIZESHIFT + _IOC_SIZEBITS;
+
+const _IOC_NONE: u32 = 0;
+const _IOC_WRITE: u32 = 1;
+const _IOC_READ: u32 = 2;
+
+macro_rules! _IOC {
+    ($dir:expr, $type:expr, $nr:expr, $size:expr) => {
+        (($dir) << _IOC_DIRSHIFT) |
+        (($type) << _IOC_TYPESHIFT) |
+        (($nr) << _IOC_NRSHIFT) |
+        (($size) << _IOC_SIZESHIFT)
+    };
+}
+
+macro_rules! _IO {
+    ($type:expr, $nr:expr) => {
+        _IOC!(_IOC_NONE, $type, $nr, 0)
+    };
+}
+
+macro_rules! _IOR {
+    ($type:expr, $nr:expr, $size:ty) => {
+        _IOC!(_IOC_READ, $type, $nr, std::mem::size_of::<$size>() as u32)
+    };
+}
+
+macro_rules! _IOW {
+    ($type:expr, $nr:expr, $size:ty) => {
+        _IOC!(_IOC_WRITE, $type, $nr, std::mem::size_of::<$size>() as u32)
+    };
+}
+
+#[repr(C)]
+struct HymoIoctlArg {
+    src: *const libc::c_char,
+    target: *const libc::c_char,
+    r#type: libc::c_int,
+}
+
+fn ioc_add_rule() -> u64 { _IOW!(HYMO_IOC_MAGIC as u32, 1, HymoIoctlArg) as u64 }
+fn ioc_del_rule() -> u64 { _IOW!(HYMO_IOC_MAGIC as u32, 2, HymoIoctlArg) as u64 }
+fn ioc_hide_rule() -> u64 { _IOW!(HYMO_IOC_MAGIC as u32, 3, HymoIoctlArg) as u64 }
+fn ioc_inject_rule() -> u64 { _IOW!(HYMO_IOC_MAGIC as u32, 4, HymoIoctlArg) as u64 }
+fn ioc_clear_all() -> u64 { _IO!(HYMO_IOC_MAGIC as u32, 5) as u64 }
+fn ioc_get_version() -> u64 { _IOR!(HYMO_IOC_MAGIC as u32, 6, libc::c_int) as u64 }
 
 #[derive(Debug)]
 pub enum HymoRule {
     Redirect {
         src: PathBuf,
         target: PathBuf,
-        file_type: u8,
+        file_type: i32,
     },
     Hide {
         path: PathBuf,
@@ -25,64 +81,84 @@ pub enum HymoRule {
 }
 
 struct HymoDriver {
-    ctl_path: PathBuf,
+    file: File,
 }
 
 impl HymoDriver {
     fn new() -> Result<Self> {
-        let path = PathBuf::from(HYMO_CTL);
-        if !path.exists() {
-            anyhow::bail!("HymoFS control file not found");
-        }
-        Ok(Self { ctl_path: path })
+        let file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(DEV_PATH)
+            .with_context(|| format!("Failed to open HymoFS control device: {}", DEV_PATH))?;
+        Ok(Self { file })
     }
 
-    fn get_version(&self) -> Option<i32> {
-        if let Ok(content) = fs::read_to_string(&self.ctl_path) {
-            if let Some(line) = content.lines().next() {
-                if let Some(ver_str) = line.strip_prefix("HymoFS Protocol: ") {
-                    return ver_str.trim().parse::<i32>().ok();
-                }
-            }
+    fn get_version(&self) -> Result<i32> {
+        let mut version: libc::c_int = 0;
+        let ret = unsafe {
+            libc::ioctl(self.file.as_raw_fd(), ioc_get_version(), &mut version)
+        };
+        if ret < 0 {
+            let err = std::io::Error::last_os_error();
+            anyhow::bail!("Failed to get version via ioctl: {}", err);
         }
-        None
+        Ok(version)
     }
 
     fn clear(&self) -> Result<()> {
-        let mut file = File::create(&self.ctl_path)?;
-        writeln!(file, "clear")?;
+        let ret = unsafe {
+            libc::ioctl(self.file.as_raw_fd(), ioc_clear_all())
+        };
+        if ret < 0 {
+            let err = std::io::Error::last_os_error();
+            anyhow::bail!("Failed to clear rules: {}", err);
+        }
         Ok(())
     }
 
     fn apply_rules(&self, rules: &[HymoRule]) -> Result<()> {
-        if rules.is_empty() {
-            return Ok(());
-        }
-
-        let file = OpenOptions::new().write(true).open(&self.ctl_path)?;
-        let mut writer = BufWriter::with_capacity(8192, file);
-
         for rule in rules {
             match rule {
                 HymoRule::Redirect { src, target, file_type } => {
-                    writeln!(
-                        writer,
-                        "add {} {} {}",
-                        src.display(),
-                        target.display(),
-                        file_type
-                    )?;
+                    let c_src = CString::new(src.to_string_lossy().as_bytes())?;
+                    let c_target = CString::new(target.to_string_lossy().as_bytes())?;
+                    let arg = HymoIoctlArg {
+                        src: c_src.as_ptr(),
+                        target: c_target.as_ptr(),
+                        r#type: *file_type,
+                    };
+                    let ret = unsafe { libc::ioctl(self.file.as_raw_fd(), ioc_add_rule(), &arg) };
+                    if ret < 0 {
+                        log::warn!("HymoFS Add failed for {:?}: {}", src, std::io::Error::last_os_error());
+                    }
                 }
                 HymoRule::Hide { path } => {
-                    writeln!(writer, "hide {}", path.display())?;
+                    let c_path = CString::new(path.to_string_lossy().as_bytes())?;
+                    let arg = HymoIoctlArg {
+                        src: c_path.as_ptr(),
+                        target: std::ptr::null(),
+                        r#type: 0,
+                    };
+                    let ret = unsafe { libc::ioctl(self.file.as_raw_fd(), ioc_hide_rule(), &arg) };
+                    if ret < 0 {
+                        log::warn!("HymoFS Hide failed for {:?}: {}", path, std::io::Error::last_os_error());
+                    }
                 }
                 HymoRule::Inject { dir } => {
-                    writeln!(writer, "inject {}", dir.display())?;
+                    let c_dir = CString::new(dir.to_string_lossy().as_bytes())?;
+                    let arg = HymoIoctlArg {
+                        src: c_dir.as_ptr(),
+                        target: std::ptr::null(),
+                        r#type: 0,
+                    };
+                    let ret = unsafe { libc::ioctl(self.file.as_raw_fd(), ioc_inject_rule(), &arg) };
+                    if ret < 0 {
+                        log::warn!("HymoFS Inject failed for {:?}: {}", dir, std::io::Error::last_os_error());
+                    }
                 }
             }
         }
-
-        writer.flush()?;
         Ok(())
     }
 }
@@ -98,6 +174,11 @@ pub enum HymoFsStatus {
 pub struct HymoFs;
 
 impl HymoFs {
+    pub fn get_version() -> Option<i32> {
+        let driver = HymoDriver::new().ok()?;
+        driver.get_version().ok()
+    }
+
     pub fn check_status() -> HymoFsStatus {
         let driver = match HymoDriver::new() {
             Ok(d) => d,
@@ -105,8 +186,8 @@ impl HymoFs {
         };
 
         let version = match driver.get_version() {
-            Some(v) => v,
-            None => return HymoFsStatus::NotPresent,
+            Ok(v) => v,
+            Err(_) => return HymoFsStatus::NotPresent,
         };
 
         if version != EXPECTED_PROTOCOL_VERSION {
@@ -166,13 +247,13 @@ impl HymoFs {
                 rules.push(HymoRule::Redirect {
                     src: target_path,
                     target: entry.path().to_path_buf(),
-                    file_type: 4, 
+                    file_type: 4,
                 });
             } else {
                 let type_code = if file_type.is_symlink() {
-                    10 
+                    10
                 } else {
-                    8 
+                    8
                 };
 
                 rules.push(HymoRule::Redirect {
