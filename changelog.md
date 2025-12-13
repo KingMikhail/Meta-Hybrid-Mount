@@ -1,8 +1,6 @@
-## v1.6.0
+## v1.6.1
 
-Changes since v1.5.4:
-* Fix HymoFS compilation warnings and align ioctl struct with kernel patch
-* Fix mount permission issues: move mount point to /dev and improve context repair
-* Fix HymoFS mounting: add missing directory injection logic and verbose logging
-* refactor(hymofs): strict logic alignment
-* refactor(hymofs): align implementation
+Changes since v1.6.0:
+* webui: use @material/web for most tabs
+* Update KSU ioctl definition to match upstream implementation
+* chore(release): bump version to v1.6.0 [skip ci]
