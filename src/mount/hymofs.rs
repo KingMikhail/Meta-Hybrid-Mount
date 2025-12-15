@@ -78,6 +78,11 @@ impl HymoFs {
         let file = Self::open_dev()?;
         unsafe { ioc_clear_all(file.as_raw_fd()) }
             .context("HymoFS clear failed")?;
+
+        // Enable debug mode by default
+        let debug_val: i32 = 1;
+        unsafe { ioc_set_debug(file.as_raw_fd(), &debug_val) }.ok();
+        
         Ok(())
     }
 
