@@ -16,7 +16,6 @@
 
   let initialConfigStr = $state('');
   let showResetConfirm = $state(false);
-
   const isValidPath = (p: string) => !p || (p.startsWith('/') && p.length > 1);
   let invalidModuleDir = $derived(!isValidPath(store.config.moduledir));
   let invalidTempDir = $derived(store.config.tempdir && !isValidPath(store.config.tempdir));
@@ -24,7 +23,6 @@
     if (!initialConfigStr) return false;
     return JSON.stringify(store.config) !== initialConfigStr;
   });
-
   $effect(() => {
     if (!store.loading.config && store.config) {
       if (!initialConfigStr || initialConfigStr === JSON.stringify(store.config)) {
@@ -32,7 +30,6 @@
       }
     }
   });
-
   $effect(() => {
     if (store.systemInfo?.zygisksuEnforce && store.systemInfo.zygisksuEnforce !== '0' && !store.config.allow_umount_coexistence) {
         if (!store.config.disable_umount) {
@@ -40,7 +37,6 @@
         }
     }
   });
-
   function save() {
     if (invalidModuleDir || invalidTempDir) {
       store.showToast(store.L.config.invalidPath, "error");
@@ -97,7 +93,8 @@
 >
   <div slot="headline">{store.L.config?.resetConfigTitle ?? 'Reset Configuration?'}</div>
   <div slot="content">
-    {store.L.config?.resetConfigConfirm ?? 'This will reset all backend settings to defaults. Continue?'}
+    {store.L.config?.resetConfigConfirm ??
+      'This will reset all backend settings to defaults. Continue?'}
   </div>
   <div slot="actions">
     <md-text-button 
@@ -124,11 +121,10 @@
     <div class="config-card">
       <div class="card-header">
         <div class="card-icon">
-          <md-icon><svg viewBox="0 0 24 24"><path d={ICONS.storage} /></svg></md-icon>
+          <md-icon><svg viewBox="0 0 24 24"><path d={ICONS.modules} /></svg></md-icon>
         </div>
         <div class="card-text">
-          <span class="card-title">{store.L.status?.storageTitle ?? 'Storage'}</span>
-          <span class="card-desc">Configure paths</span>
+          <span class="card-title">{store.L.config.moduleDir}</span>
         </div>
       </div>
       
@@ -142,7 +138,20 @@
         >
           <md-icon slot="leading-icon"><svg viewBox="0 0 24 24"><path d={ICONS.modules} /></svg></md-icon>
         </md-outlined-text-field>
+      </div>
+    </div>
 
+    <div class="config-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <md-icon><svg viewBox="0 0 24 24"><path d={ICONS.timer} /></svg></md-icon>
+        </div>
+        <div class="card-text">
+          <span class="card-title">{store.L.config.tempDir}</span>
+        </div>
+      </div>
+      
+      <div class="input-stack">
         <md-outlined-text-field 
           label={store.L.config.tempDir} 
           value={store.config.tempdir}
@@ -274,7 +283,7 @@
         <md-ripple></md-ripple>
         <div class="tile-top">
           <div class="tile-icon">
-             <md-icon><svg viewBox="0 0 24 24"><path d={ICON_STEALTH} /></svg></md-icon>
+              <md-icon><svg viewBox="0 0 24 24"><path d={ICON_STEALTH} /></svg></md-icon>
           </div>
         </div>
         <div class="tile-bottom">
