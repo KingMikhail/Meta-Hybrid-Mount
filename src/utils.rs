@@ -24,6 +24,7 @@ use tracing_subscriber::{
 };
 use tracing_appender::non_blocking::WorkerGuard;
 use regex_lite::Regex;
+use procfs::process::Process;
 use crate::defs;
 use crate::defs::TMPFS_CANDIDATES;
 
@@ -38,6 +39,8 @@ const SELINUX_XATTR: &str = "security.selinux";
 #[allow(dead_code)]
 const XATTR_TEST_FILE: &str = ".xattr_test";
 const DEFAULT_CONTEXT: &str = "u:object_r:system_file:s0";
+
+static MODULE_ID_REGEX: OnceLock<Regex> = OnceLock::new();
 
 struct SimpleFormatter;
 impl<S, N> FormatEvent<S, N> for SimpleFormatter
@@ -106,7 +109,10 @@ pub fn init_logging(verbose: bool, log_path: &Path) -> Result<WorkerGuard> {
 /// - Followed by one or more alphanumeric, dot, underscore, or hyphen characters
 /// - Minimum length: 2 characters
 pub fn validate_module_id(module_id: &str) -> Result<()> {
-    let re = Regex::new(r"^[a-zA-Z][a-zA-Z0-9._-]+$")?;
+    let re = MODULE_ID_REGEX.get_or_init(|| {
+        Regex::new(r"^[a-zA-Z][a-zA-Z0-9._-]+$").expect("Invalid Regex pattern")
+    });
+    
     if re.is_match(module_id) {
         Ok(())
     } else {
@@ -194,6 +200,14 @@ pub fn is_xattr_supported(path: &Path) -> bool {
 pub fn is_mounted<P: AsRef<Path>>(path: P) -> bool {
     let path_str = path.as_ref().to_string_lossy();
     let search = path_str.trim_end_matches('/');
+    
+    if let Ok(process) = Process::myself() {
+        if let Ok(mountinfo) = process.mountinfo() {
+            return mountinfo.into_iter().any(|m| m.mount_point.to_string_lossy() == search);
+        }
+    }
+    
+    // Fallback if procfs fails for some reason
     if let Ok(content) = fs::read_to_string("/proc/mounts") {
         for line in content.lines() {
             let parts: Vec<&str> = line.split_whitespace().collect();

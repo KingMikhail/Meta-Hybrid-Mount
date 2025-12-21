@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use log::{info, warn};
 use std::path::{Path, PathBuf};
 use std::fs;
@@ -59,23 +59,25 @@ pub fn mount_overlayfs(
         .collect::<Vec<_>>()
         .join(":");
 
-    if lowerdir_config.len() < PAGE_LIMIT {
-        return do_mount_overlay(
-            &lowerdir_config,
-            upperdir,
-            workdir,
-            dest,
-            disable_umount
-        );
+    match do_mount_overlay(
+        &lowerdir_config,
+        upperdir.clone(),
+        workdir.clone(),
+        dest.as_ref(),
+        disable_umount
+    ) {
+        Ok(_) => return Ok(()),
+        Err(e) => {
+            if lowerdir_config.len() >= PAGE_LIMIT {
+                if upperdir.is_some() || workdir.is_some() {
+                    return Err(e);
+                }
+                info!("Direct overlay mount failed (possibly due to length limits), switching to staged mount. Error: {}", e);
+                return mount_overlayfs_staged(lower_dirs, lowest, dest, disable_umount);
+            }
+            return Err(e);
+        }
     }
-
-    info!("!! Lowerdir params too long ({} bytes), switching to staged mount.", lowerdir_config.len());
-    
-    if upperdir.is_some() || workdir.is_some() {
-        bail!("Staged mount not supported for RW overlay (upperdir/workdir present)");
-    }
-
-    mount_overlayfs_staged(lower_dirs, lowest, dest, disable_umount)
 }
 
 fn mount_overlayfs_staged(

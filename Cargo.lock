@@ -724,6 +724,7 @@ dependencies = [
  "log",
  "mimalloc",
  "nix",
+ "oncelock",
  "procfs",
  "rayon",
  "regex-lite",
@@ -804,6 +805,15 @@ name = "once_cell_polyfill"
 version = "1.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
+
+[[package]]
+name = "oncelock"
+version = "0.1.0-alpha.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f67d3cfd3d50536edaa4a4e17ddcb04fbaef82eb6dd120b16e2752c4e8fe04ca"
+dependencies = [
+ "rustversion",
+]
 
 [[package]]
 name = "pbkdf2"
