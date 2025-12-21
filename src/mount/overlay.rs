@@ -66,7 +66,7 @@ pub fn mount_overlayfs(
         dest.as_ref(),
         disable_umount
     ) {
-        Ok(_) => return Ok(()),
+        Ok(_) => Ok(()),
         Err(e) => {
             if lowerdir_config.len() >= PAGE_LIMIT {
                 if upperdir.is_some() || workdir.is_some() {
@@ -75,7 +75,7 @@ pub fn mount_overlayfs(
                 info!("Direct overlay mount failed (possibly due to length limits), switching to staged mount. Error: {}", e);
                 return mount_overlayfs_staged(lower_dirs, lowest, dest, disable_umount);
             }
-            return Err(e);
+            Err(e)
         }
     }
 }

@@ -57,13 +57,11 @@ impl MountPlan {
                         .map(|s| s.to_string_lossy().to_string())
                         .unwrap_or_else(|| "UNKNOWN".into());
                     
-                    for entry in WalkDir::new(layer_path).min_depth(1) {
-                        if let Ok(entry) = entry {
-                            if !entry.file_type().is_file() { continue; }
-                            if let Ok(rel) = entry.path().strip_prefix(layer_path) {
-                                let rel_str = rel.to_string_lossy().to_string();
-                                file_map.entry(rel_str).or_default().push(module_id.clone());
-                            }
+                    for entry in WalkDir::new(layer_path).min_depth(1).into_iter().flatten() {
+                        if !entry.file_type().is_file() { continue; }
+                        if let Ok(rel) = entry.path().strip_prefix(layer_path) {
+                            let rel_str = rel.to_string_lossy().to_string();
+                            file_map.entry(rel_str).or_default().push(module_id.clone());
                         }
                     }
                 }
@@ -280,7 +278,7 @@ pub fn generate(
 
 fn has_files(path: &Path) -> bool {
     if let Ok(entries) = fs::read_dir(path) {
-        for _ in entries.flatten() {
+        if entries.flatten().next().is_some() {
             return true;
         }
     }

@@ -299,10 +299,8 @@ impl HymoFs {
                 ) {
                     warn!("Failed to add rule for {}: {}", target_path.display(), e);
                 }
-            } else {
-                if let Err(e) = Self::hide_path(&target_path.to_string_lossy()) {
-                    warn!("Failed to hide path {}: {}", target_path.display(), e);
-                }
+            } else if let Err(e) = Self::hide_path(&target_path.to_string_lossy()) {
+                warn!("Failed to hide path {}: {}", target_path.display(), e);
             }
         }
         

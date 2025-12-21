@@ -51,18 +51,14 @@ fn prune_orphaned_modules(modules: &[Module], target_base: &Path) -> Result<()> 
         let path = entry.path();
         let name_os = entry.file_name();
         let name = name_os.to_string_lossy();
-        if name != "lost+found" && name != "meta-hybrid" {
-            if !active_ids.contains(name.as_ref()) {
-                log::info!("Pruning orphaned module storage: {}", name);
-                if path.is_dir() {
-                    if let Err(e) = fs::remove_dir_all(&path) {
-                        log::warn!("Failed to remove orphan dir {}: {}", name, e);
-                    }
-                } else {
-                    if let Err(e) = fs::remove_file(&path) {
-                        log::warn!("Failed to remove orphan file {}: {}", name, e);
-                    }
+        if name != "lost+found" && name != "meta-hybrid" && !active_ids.contains(name.as_ref()) {
+            log::info!("Pruning orphaned module storage: {}", name);
+            if path.is_dir() {
+                if let Err(e) = fs::remove_dir_all(&path) {
+                    log::warn!("Failed to remove orphan dir {}: {}", name, e);
                 }
+            } else if let Err(e) = fs::remove_file(&path) {
+                log::warn!("Failed to remove orphan file {}: {}", name, e);
             }
         }
     });
@@ -109,11 +105,9 @@ fn recursive_context_repair(base: &Path, current: &Path) -> Result<()> {
         let system_path = Path::new("/").join(relative);
         if system_path.exists() {
             let _ = utils::copy_path_context(&system_path, current);
-        } else {
-            if let Some(parent) = system_path.parent() {
-                if parent.exists() {
-                     let _ = utils::copy_path_context(parent, current);
-                }
+        } else if let Some(parent) = system_path.parent() {
+            if parent.exists() {
+                 let _ = utils::copy_path_context(parent, current);
             }
         }
     }

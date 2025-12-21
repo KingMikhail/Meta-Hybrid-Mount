@@ -8,18 +8,10 @@ use serde::{Deserialize, Serialize};
 
 pub const CONFIG_FILE_DEFAULT: &str = "/data/adb/meta-hybrid/config.toml";
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct WinnowingTable {
     #[serde(flatten)]
     pub rules: HashMap<String, String>, 
-}
-
-impl Default for WinnowingTable {
-    fn default() -> Self {
-        Self {
-            rules: HashMap::new(),
-        }
-    }
 }
 
 impl WinnowingTable {

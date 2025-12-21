@@ -101,20 +101,16 @@ pub fn diagnose_plan(plan: &MountPlan) -> Vec<DiagnosticIssue> {
         .collect();
     for (mod_id, layer_path) in all_layers {
         if !layer_path.exists() { continue; }
-        for entry in WalkDir::new(layer_path) {
-            if let Ok(entry) = entry {
-                if entry.path_is_symlink() {
-                    if let Ok(target) = std::fs::read_link(entry.path()) {
-                        if target.is_absolute() {
-                            if !target.exists() {
-                                issues.push(DiagnosticIssue {
-                                    level: DiagnosticLevel::Warning,
-                                    context: mod_id.clone(),
-                                    message: format!("Dead absolute symlink: {} -> {}", 
-                                        entry.path().display(), target.display()),
-                                });
-                            }
-                        }
+        for entry in WalkDir::new(layer_path).into_iter().flatten() {
+            if entry.path_is_symlink() {
+                if let Ok(target) = std::fs::read_link(entry.path()) {
+                    if target.is_absolute() && !target.exists() {
+                        issues.push(DiagnosticIssue {
+                            level: DiagnosticLevel::Warning,
+                            context: mod_id.clone(),
+                            message: format!("Dead absolute symlink: {} -> {}", 
+                                entry.path().display(), target.display()),
+                        });
                     }
                 }
             }

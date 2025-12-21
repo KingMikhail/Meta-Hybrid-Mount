@@ -6,19 +6,14 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use crate::{defs, conf::config};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum MountMode {
+    #[default]
     Overlay,
     HymoFs,
     Magic,
     Ignore,
-}
-
-impl Default for MountMode {
-    fn default() -> Self {
-        MountMode::Overlay
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

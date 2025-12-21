@@ -52,13 +52,11 @@ pub fn setup(mnt_base: &Path, img_path: &Path, force_ext4: bool, mount_source: &
     
     fs::create_dir_all(mnt_base)?;
 
-    if !force_ext4 {
-        if try_setup_tmpfs(mnt_base, mount_source)? {
-            return Ok(StorageHandle {
-                mount_point: mnt_base.to_path_buf(),
-                mode: "tmpfs".to_string(),
-            });
-        }
+    if !force_ext4 && try_setup_tmpfs(mnt_base, mount_source)? {
+        return Ok(StorageHandle {
+            mount_point: mnt_base.to_path_buf(),
+            mode: "tmpfs".to_string(),
+        });
     }
 
     setup_ext4_image(mnt_base, img_path)
@@ -83,7 +81,7 @@ fn setup_ext4_image(target: &Path, img_path: &Path) -> Result<StorageHandle> {
         create_image(img_path).context("Failed to create modules.img")?;
     }
 
-    if let Err(_) = utils::mount_image(img_path, target) {
+    if utils::mount_image(img_path, target).is_err() {
         if utils::repair_image(img_path).is_ok() {
             utils::mount_image(img_path, target).context("Failed to mount modules.img after repair")?;
         } else {

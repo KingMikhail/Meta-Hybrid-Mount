@@ -211,10 +211,8 @@ pub fn is_mounted<P: AsRef<Path>>(path: P) -> bool {
     if let Ok(content) = fs::read_to_string("/proc/mounts") {
         for line in content.lines() {
             let parts: Vec<&str> = line.split_whitespace().collect();
-            if parts.len() > 1 {
-                if parts[1] == search {
-                    return true;
-                }
+            if parts.len() > 1 && parts[1] == search {
+                return true;
             }
         }
     }

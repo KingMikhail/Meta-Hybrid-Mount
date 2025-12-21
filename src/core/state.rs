@@ -4,6 +4,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use crate::defs;
+
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct RuntimeState {
     pub timestamp: u64,
@@ -26,7 +27,9 @@ pub struct RuntimeState {
     #[serde(default)]
     pub hymofs_available: bool,
 }
+
 impl RuntimeState {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         storage_mode: String, 
         mount_point: PathBuf, 
