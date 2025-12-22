@@ -2,6 +2,8 @@ name: Build Meta-Hybrid
 
 on:
   push:
+    branches:
+      - '**'
     paths-ignore:
       - '**.md'
       - '.gitignore'
