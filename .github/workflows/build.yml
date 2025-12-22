@@ -74,17 +74,7 @@ jobs:
 
       - name: Build All
         run: |
-          # Only build for arm64 (armv8) to speed up CI
           cargo run -p xtask -- build --release --arch arm64
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install Python Dependencies
-        run: |
-          pip install requests
 
       - name: Notify Telegram (CI)
         if: success()
@@ -92,8 +82,8 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # Changed label to: CN (EN)
-          python3 scripts/tg_notify.py "37" "日常耕作 🌱 (Daily Tilling)"
+          chmod +x notify
+          ./notify "37" "日常耕作 🌱 (Daily Tilling)"
 
       - name: Prepare Artifact
         run: |
