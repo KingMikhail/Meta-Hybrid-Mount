@@ -49,11 +49,19 @@ fn main() {
         }
     };
 
-    let file_name = file_path.file_name().unwrap().to_string_lossy();
+    let parent_dir = file_path.parent().expect("Failed to get parent dir");
+    let file_name = file_path.file_name().unwrap().to_string_lossy().to_string();
     let file_size = fs::metadata(&file_path).map(|m| m.len()).unwrap_or(0) as f64 / 1024.0 / 1024.0;
 
     println!("Selecting yield: {} ({:.2} MB)", file_name, file_size);
-    println!("Debug: Absolute path is {}", file_path.display());
+    println!("Debug: Working Directory will be: {}", parent_dir.display());
+    println!("Debug: Target Filename is: {}", file_name);
+    println!("Debug: Checking file existence via 'ls -la'...");
+    let _ = Command::new("ls")
+        .arg("-la")
+        .arg(&file_name)
+        .current_dir(parent_dir)
+        .status();
 
     let commit_msg = get_git_commit_message();
     let safe_commit_msg = escape_html(&commit_msg);
@@ -68,11 +76,13 @@ fn main() {
     );
 
     let url = format!("https://api.telegram.org/bot{}/sendDocument", bot_token);
+
+    // 关键修改：只传递文件名，不传递路径
     let mut curl_args = vec![
         "-F".to_string(),
         format!("chat_id={}", chat_id),
         "-F".to_string(),
-        format!("document=@{}", file_path.display()),
+        format!("document=@{}", file_name), // 这里只传文件名
         "-F".to_string(),
         format!("caption={}", caption),
         "-F".to_string(),
@@ -92,7 +102,7 @@ fn main() {
 
     let max_retries = 2;
     for attempt in 0..max_retries {
-        let (success, response) = run_curl(&curl_args);
+        let (success, response) = run_curl(&curl_args, parent_dir);
 
         if success && response.contains("\"ok\":true") {
             println!("✅ Yield stored successfully!");
@@ -144,8 +154,13 @@ fn get_git_commit_message() -> String {
     }
 }
 
-fn run_curl(args: &[String]) -> (bool, String) {
-    match Command::new("curl").args(["-s", "-S"]).args(args).output() {
+fn run_curl(args: &[String], working_dir: &std::path::Path) -> (bool, String) {
+    match Command::new("curl")
+        .current_dir(working_dir)
+        .args(["-s", "-S"])
+        .args(args)
+        .output()
+    {
         Ok(output) => {
             let stdout = String::from_utf8_lossy(&output.stdout).to_string();
             let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -179,8 +194,7 @@ fn reopen_topic(bot_token: &str, chat_id: &str, topic_id: &str) -> bool {
         "POST".to_string(),
         url,
     ];
-
-    let (success, response) = run_curl(&args);
+    let (success, response) = run_curl(&args, &env::current_dir().unwrap());
 
     if success && response.contains("\"ok\":true") {
         println!("✅ Topic {} successfully reopened!", topic_id);
