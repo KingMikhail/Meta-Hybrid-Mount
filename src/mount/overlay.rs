@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, bail};
-use log::{info, warn};
+use log::{debug, info, warn};
 use std::{
     ffi::CString,
     fs,
@@ -39,7 +39,11 @@ fn umount_dir(src: impl AsRef<Path>) -> Result<()> {
     Ok(())
 }
 
-fn get_overlay_features() -> String {
+fn get_overlay_features(simple_mode: bool) -> String {
+    if simple_mode {
+        return String::new();
+    }
+
     let mut features = String::new();
 
     if Path::new("/sys/module/overlay/parameters/redirect_dir").exists() {
@@ -107,6 +111,7 @@ pub fn mount_overlayfs(
         upperdir.clone(),
         workdir.clone(),
         dest.as_ref(),
+        false,
         #[cfg(any(target_os = "linux", target_os = "android"))]
         disable_umount,
     ) {
@@ -128,7 +133,29 @@ pub fn mount_overlayfs(
                     disable_umount,
                 );
             }
-            Err(e)
+
+            debug!(
+                "Standard overlay mount failed: {}. Retrying with simple mode...",
+                e
+            );
+            match do_mount_overlay(
+                &lowerdir_config,
+                upperdir,
+                workdir,
+                dest.as_ref(),
+                true,
+                #[cfg(any(target_os = "linux", target_os = "android"))]
+                disable_umount,
+            ) {
+                Ok(_) => {
+                    debug!("Overlay mount succeeded with simple mode.");
+                    Ok(())
+                }
+                Err(e2) => {
+                    warn!("Overlay fallback (simple mode) also failed: {}", e2);
+                    Err(e)
+                }
+            }
         }
     }
 }
@@ -192,14 +219,30 @@ fn mount_overlayfs_staged(
             .collect::<Vec<_>>()
             .join(":");
 
-        do_mount_overlay(
+        if let Err(e) = do_mount_overlay(
             &lowerdir_str,
             None,
             None,
             &target_path,
+            false,
             #[cfg(any(target_os = "linux", target_os = "android"))]
             disable_umount,
-        )?;
+        ) {
+            debug!(
+                "Staged mount layer {} failed, retrying simple mode. Error: {}",
+                i, e
+            );
+            do_mount_overlay(
+                &lowerdir_str,
+                None,
+                None,
+                &target_path,
+                true,
+                #[cfg(any(target_os = "linux", target_os = "android"))]
+                disable_umount,
+            )
+            .with_context(|| format!("Failed to mount staged layer {} (simple mode)", i))?;
+        }
 
         if !is_last_layer {
             guard.mounts.push(target_path.clone());
@@ -216,6 +259,7 @@ fn do_mount_overlay(
     upperdir: Option<PathBuf>,
     workdir: Option<PathBuf>,
     dest: impl AsRef<Path>,
+    simple_mode: bool,
     #[cfg(any(target_os = "linux", target_os = "android"))] disable_umount: bool,
 ) -> Result<()> {
     let upperdir_s = upperdir
@@ -225,7 +269,7 @@ fn do_mount_overlay(
         .filter(|wd| wd.exists())
         .map(|e| e.display().to_string());
 
-    let extra_features = get_overlay_features();
+    let extra_features = get_overlay_features(simple_mode);
 
     let result = (|| {
         let fs = fsopen("overlay", FsOpenFlags::FSOPEN_CLOEXEC)?;
@@ -238,11 +282,13 @@ fn do_mount_overlay(
             fsconfig_set_string(fs, "workdir", workdir)?;
         }
 
-        if extra_features.contains("redirect_dir") {
-            let _ = fsconfig_set_string(fs, "redirect_dir", "on");
-        }
-        if extra_features.contains("metacopy") {
-            let _ = fsconfig_set_string(fs, "metacopy", "on");
+        if !simple_mode {
+            if extra_features.contains("redirect_dir") {
+                let _ = fsconfig_set_string(fs, "redirect_dir", "on");
+            }
+            if extra_features.contains("metacopy") {
+                let _ = fsconfig_set_string(fs, "metacopy", "on");
+            }
         }
 
         fsconfig_set_string(fs, "source", KSU_OVERLAY_SOURCE)?;
