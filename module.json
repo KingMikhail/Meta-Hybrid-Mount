@@ -7,11 +7,6 @@
             "type": "add",
             "name": "Tools-cx-app",
             "link": "https://github.com/Tools-cx-app"
-        },
-        {
-            "type": "add",
-            "name": "Anatdx",
-            "link": "https://github.com/Anatdx"
         }
     ]
 }
