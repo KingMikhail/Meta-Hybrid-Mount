@@ -78,10 +78,7 @@ pub fn mount_overlayfs(
                 if upperdir.is_some() || workdir.is_some() {
                     return Err(e);
                 }
-                info!(
-                    "Direct overlay mount failed (possibly due to length limits), switching to staged mount. Error: {}",
-                    e
-                );
+                info!("Direct overlay mount failed (possibly due to length limits), switching to staged mount. Error: {}", e);
                 return mount_overlayfs_staged(
                     lower_dirs,
                     lowest,

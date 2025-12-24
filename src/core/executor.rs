@@ -202,9 +202,7 @@ pub fn execute(plan: &MountPlan, config: &config::Config) -> Result<ExecutionRes
                     continue;
                 }
 
-                if let Err(e) =
-                    overlay::bind_mount(&op.source, &mirror_partition, config.disable_umount)
-                {
+                if let Err(e) = overlay::bind_mount(&op.source, &mirror_partition) {
                     log::warn!("Failed to bind mount mirror for {}: {}", op.module_id, e);
                     continue;
                 }
@@ -298,7 +296,6 @@ pub fn execute(plan: &MountPlan, config: &config::Config) -> Result<ExecutionRes
                 &lowerdir_strings,
                 work_opt,
                 upper_opt,
-                &[],
                 config.disable_umount,
             ) {
                 log::warn!(
