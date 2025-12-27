@@ -220,7 +220,7 @@ fn main() -> Result<()> {
     utils::ensure_dir_exists(defs::RUN_DIR)
         .with_context(|| format!("Failed to create run directory: {}", defs::RUN_DIR))?;
 
-    let mnt_base = PathBuf::from(defs::HYBRID_MNT_DIR);
+    let mnt_base = PathBuf::from(&config.hybrid_mnt_dir);
 
     let img_path = Path::new(defs::BASE_DIR).join("modules.img");
 
