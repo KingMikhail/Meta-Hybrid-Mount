@@ -56,10 +56,7 @@ impl MountPlan {
                 let mut file_map: HashMap<String, Vec<String>> = HashMap::new();
 
                 for layer_path in &op.lowerdirs {
-                    let module_id = layer_path
-                        .parent()
-                        .and_then(|p| p.file_name())
-                        .map(|s| s.to_string_lossy().to_string())
+                    let module_id = crate::utils::extract_module_id(layer_path)
                         .unwrap_or_else(|| "UNKNOWN".into());
 
                     for entry in WalkDir::new(layer_path).min_depth(1).into_iter().flatten() {
@@ -127,10 +124,8 @@ impl MountPlan {
                         "├──"
                     };
 
-                    let mod_name = layer
-                        .parent()
-                        .and_then(|p| p.file_name())
-                        .map(|n| n.to_string_lossy())
+                    let mod_name = crate::utils::extract_module_id(layer)
+                        .map(|n| n.to_string())
                         .unwrap_or_else(|| "UNKNOWN".into());
 
                     log::info!("{}{} [Layer] {}", prefix, sub_branch, mod_name);

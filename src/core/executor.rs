@@ -38,12 +38,6 @@ pub struct DiagnosticIssue {
     pub message: String,
 }
 
-fn extract_id(path: &Path) -> Option<String> {
-    path.parent()
-        .and_then(|p| p.file_name())
-        .map(|s| s.to_string_lossy().to_string())
-}
-
 fn extract_module_root(partition_path: &Path) -> Option<PathBuf> {
     partition_path.parent().map(|p| p.to_path_buf())
 }
@@ -123,7 +117,7 @@ pub fn diagnose_plan(plan: &MountPlan) -> Vec<DiagnosticIssue> {
         .iter()
         .flat_map(|op| {
             op.lowerdirs.iter().map(move |path| {
-                let mod_id = extract_id(path).unwrap_or_else(|| "unknown".into());
+                let mod_id = utils::extract_module_id(path).unwrap_or_else(|| "unknown".into());
 
                 (mod_id, path)
             })
@@ -223,7 +217,7 @@ pub fn execute(plan: &MountPlan, config: &config::Config) -> Result<ExecutionRes
                     if let Some(root) = extract_module_root(layer_path) {
                         local_magic.push(root.clone());
 
-                        if let Some(id) = extract_id(layer_path) {
+                        if let Some(id) = utils::extract_module_id(layer_path) {
                             local_fallback_ids.push(id);
                         }
                     }

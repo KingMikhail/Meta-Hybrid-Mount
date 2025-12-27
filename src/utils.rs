@@ -579,3 +579,9 @@ pub fn mount_erofs_image(image_path: &Path, target: &Path) -> Result<()> {
     }
     Ok(())
 }
+
+pub fn extract_module_id(path: &Path) -> Option<String> {
+    path.parent()
+        .and_then(|p| p.file_name())
+        .map(|s| s.to_string_lossy().to_string())
+}
