@@ -2,45 +2,35 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    collections::HashSet,
     ffi::CString,
+    fs::{self, read_dir},
     os::fd::RawFd,
     path::Path,
-    sync::{Mutex, OnceLock},
+    sync::{
+        LazyLock, Mutex, OnceLock,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 
 use anyhow::{Context, Result, bail};
+use ksu::TryUmount;
 use nix::ioctl_write_ptr_bad;
 
+use crate::defs::{DISABLE_FILE_NAME, REMOVE_FILE_NAME, SKIP_MOUNT_FILE_NAME};
+
 const KSU_INSTALL_MAGIC1: u32 = 0xDEADBEEF;
-
 const KSU_INSTALL_MAGIC2: u32 = 0xCAFEBABE;
-
 const KSU_IOCTL_NUKE_EXT4_SYSFS: u32 = 0x40004b11;
 
-const KSU_IOCTL_ADD_TRY_UMOUNT: u32 = 0x40004b12;
-
 static DRIVER_FD: OnceLock<RawFd> = OnceLock::new();
-
-static SENT_UNMOUNTS: OnceLock<Mutex<HashSet<String>>> = OnceLock::new();
-
-#[repr(C)]
-struct KsuAddTryUmount {
-    arg: u64,
-    flags: u32,
-    mode: u8,
-}
+static LAST: AtomicBool = AtomicBool::new(false);
+pub static TMPFS: OnceLock<String> = OnceLock::new();
+pub static LIST: LazyLock<Mutex<TryUmount>> = LazyLock::new(|| Mutex::new(TryUmount::new()));
 
 #[repr(C)]
 struct NukeExt4SysfsCmd {
     arg: u64,
 }
-
-ioctl_write_ptr_bad!(
-    ksu_add_try_umount,
-    KSU_IOCTL_ADD_TRY_UMOUNT,
-    KsuAddTryUmount
-);
 
 ioctl_write_ptr_bad!(
     ksu_nuke_ext4_sysfs,
@@ -68,44 +58,50 @@ pub fn send_unmountable<P>(target: P) -> Result<()>
 where
     P: AsRef<Path>,
 {
-    let path_ref = target.as_ref();
-
-    let path_str = path_ref.to_string_lossy().to_string();
-
-    if path_str.is_empty() {
+    if LAST.load(Ordering::Relaxed) {
         return Ok(());
     }
 
-    let cache = SENT_UNMOUNTS.get_or_init(|| Mutex::new(HashSet::new()));
+    for entry in read_dir("/data/adb/modules")?.flatten() {
+        let path = entry.path();
 
-    let mut set = cache.lock().unwrap();
+        if !path.is_dir() {
+            continue;
+        }
 
-    if set.contains(&path_str) {
-        log::debug!("Unmount skipped (dedup): {}", path_str);
+        if !path.join("module.prop").exists() {
+            continue;
+        }
 
-        return Ok(());
+        let disabled =
+            path.join(DISABLE_FILE_NAME).exists() || path.join(REMOVE_FILE_NAME).exists();
+        let skip = path.join(SKIP_MOUNT_FILE_NAME).exists();
+        if disabled || skip {
+            continue;
+        }
+
+        if !path.ends_with("zygisksu") {
+            continue;
+        }
+
+        if crate::utils::check_zygisksu_enforce_status()
+            && TMPFS.get().is_some_and(|s| s.trim() == "/debug_ramdisk")
+        {
+            log::warn!("ZygiskSU/ZN detected, canceling try_umount.");
+            LAST.store(true, Ordering::Relaxed);
+            return Ok(());
+        }
     }
 
-    set.insert(path_str.clone());
+    LIST.lock().unwrap().add(target);
 
-    let path = CString::new(path_str)?;
+    Ok(())
+}
 
-    let cmd = KsuAddTryUmount {
-        arg: path.as_ptr() as u64,
-        flags: 2,
-        mode: 1,
-    };
-
-    let fd = *DRIVER_FD.get_or_init(grab_fd);
-
-    if fd < 0 {
-        return Ok(());
-    }
-
-    unsafe {
-        ksu_add_try_umount(fd, &cmd)?;
-    }
-
+pub fn commit() -> Result<()> {
+    let mut list = LIST.lock().unwrap();
+    list.flags(2);
+    list.umount()?;
     Ok(())
 }
 

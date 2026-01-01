@@ -635,6 +635,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ksu"
+version = "0.1.0"
+source = "git+https://github.com/Tools-cx-app/ksu.git#23c3219c054f66cc990524c247b160e4771bbf5e"
+dependencies = [
+ "anyhow",
+ "libc",
+ "nix",
+ "rustix 1.1.3",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -716,14 +727,16 @@ checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 
 [[package]]
 name = "meta-hybrid"
-version = "1.9.55"
+version = "2.0.0"
 dependencies = [
  "android_logger",
  "anyhow",
+ "cfg_aliases",
  "chrono",
  "clap",
  "env_logger",
  "extattr",
+ "ksu",
  "libc",
  "log",
  "mimalloc",
