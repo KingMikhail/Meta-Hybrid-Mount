@@ -13,9 +13,7 @@ pub fn send_unmountable<P>(target: P) -> Result<()>
 where
     P: AsRef<Path>,
 {
-    LIST.lock()
-        .map_err(|_| anyhow::anyhow!("Failed to lock unmount list"))?
-        .add(target);
+    LIST.lock().unwrap().add(target);
     Ok(())
 }
 
