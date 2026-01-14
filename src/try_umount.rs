@@ -6,7 +6,7 @@ use std::{
     sync::{LazyLock, Mutex, OnceLock},
 };
 
-use anyhow::Result;
+use anyhow::{Result, bail};
 use ksu::{NukeExt4Sysfs, TryUmount};
 
 pub static TMPFS: OnceLock<String> = OnceLock::new();
@@ -30,8 +30,19 @@ pub fn commit() -> Result<()> {
     let mut list = LIST
         .lock()
         .map_err(|_| anyhow::anyhow!("Failed to lock unmount list"))?;
-    list.flags(2);
-    list.umount()?;
+
+    // Attempt 1: Normal unmount (0)
+    list.flags(0);
+    if let Err(e0) = list.umount() {
+        tracing::debug!("try_umount(0) failed: {:#}, retrying with flags(2)", e0);
+
+        // Attempt 2: Detach/Lazy unmount (2)
+        list.flags(2);
+        if let Err(e2) = list.umount() {
+            tracing::warn!("try_umount(2) failed: {:#}", e2);
+        }
+    }
+
     Ok(())
 }
 
