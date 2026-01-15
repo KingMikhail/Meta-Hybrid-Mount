@@ -1,5 +1,3 @@
-// Copyright 2025 Meta-Hybrid Mount Authors
-// SPDX-License-Identifier: GPL-3.0-or-later
 mod conf;
 mod core;
 mod defs;
@@ -8,7 +6,7 @@ mod mount;
 mod try_umount;
 mod utils;
 
-use core::{OryzaEngine, executor, granary, inventory, planner, winnow};
+use core::{OryzaEngine, executor, granary, inventory, planner};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
@@ -67,9 +65,6 @@ fn main() -> Result<()> {
             Commands::GenConfig { output } => cli_handlers::handle_gen_config(output)?,
             Commands::ShowConfig => cli_handlers::handle_show_config(&cli)?,
             Commands::SaveConfig { payload } => cli_handlers::handle_save_config(&cli, payload)?,
-            Commands::SaveRules { module, payload } => {
-                cli_handlers::handle_save_rules(module, payload)?
-            }
             Commands::Storage => cli_handlers::handle_storage()?,
             Commands::Modules => cli_handlers::handle_modules(&cli)?,
             Commands::Conflicts => cli_handlers::handle_conflicts(&cli)?,
@@ -168,18 +163,12 @@ fn main() -> Result<()> {
         } else {
             tracing::warn!("!! DETECTED {} FILE CONFLICTS !!", report.details.len());
 
-            let winnowed = winnow::sift_conflicts(report.details, &config.winnowing);
-
-            for c in winnowed {
-                let status = if c.is_forced { "(FORCED)" } else { "" };
-
+            for c in report.details {
                 tracing::warn!(
-                    "   [{}] {} <== {:?} >> Selected: {} {}",
+                    "   [{}] {} <== {:?}",
                     "CONFLICT",
-                    c.path.display(),
-                    c.contenders,
-                    c.selected,
-                    status
+                    format!("/{}/{}", c.partition, c.relative_path),
+                    c.contending_modules
                 );
             }
         }

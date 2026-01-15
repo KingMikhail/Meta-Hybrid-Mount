@@ -1,8 +1,4 @@
-// Copyright 2025 Meta-Hybrid Mount Authors
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 use std::{
-    collections::HashMap,
     fs,
     path::{Path, PathBuf},
 };
@@ -12,30 +8,6 @@ use serde::{Deserialize, Serialize};
 
 pub const CONFIG_FILE_DEFAULT: &str = "/data/adb/meta-hybrid/config.toml";
 use crate::defs::DEFAULT_HYBRID_MNT_DIR;
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct WinnowingTable {
-    #[serde(flatten)]
-    pub rules: HashMap<String, String>,
-}
-
-impl WinnowingTable {
-    pub fn get_preferred_module(&self, file_path: &Path) -> Option<String> {
-        let path_str = file_path.to_string_lossy().to_string();
-
-        self.rules.get(&path_str).cloned()
-    }
-
-    pub fn set_rule(&mut self, file_path: &str, module_id: &str) {
-        self.rules
-            .insert(file_path.to_string(), module_id.to_string());
-    }
-
-    #[allow(dead_code)]
-    pub fn remove_rule(&mut self, file_path: &str) {
-        self.rules.remove(file_path);
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GranaryConfig {
@@ -91,8 +63,6 @@ pub struct Config {
     #[serde(default)]
     pub dry_run: bool,
     #[serde(default)]
-    pub winnowing: WinnowingTable,
-    #[serde(default)]
     pub granary: GranaryConfig,
     #[serde(default = "default_hybrid_mnt_dir")]
     pub hybrid_mnt_dir: String,
@@ -143,7 +113,6 @@ impl Default for Config {
             disable_umount: false,
             allow_umount_coexistence: false,
             dry_run: false,
-            winnowing: WinnowingTable::default(),
             granary: GranaryConfig::default(),
             hybrid_mnt_dir: default_hybrid_mnt_dir(),
         }

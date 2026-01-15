@@ -1,8 +1,3 @@
-/**
- * Copyright 2025 Meta-Hybrid Mount Authors
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
-
 export interface GranaryConfig {
   max_backups: number;
   retention_days: number;
@@ -22,16 +17,10 @@ export interface AppConfig {
   allow_umount_coexistence: boolean;
   dry_run: boolean;
   logfile?: string;
-  winnowing?: Record<string, string>;
   granary: GranaryConfig;
 }
 
 export type MountMode = 'overlay' | 'magic' | 'ignore';
-
-export interface ModuleRules {
-  default_mode: MountMode;
-  paths: Record<string, MountMode>;
-}
 
 export interface Module {
   id: string;
@@ -41,7 +30,6 @@ export interface Module {
   description: string;
   mode: string;
   is_mounted: boolean;
-  rules: ModuleRules;
   enabled?: boolean;
   source_path?: string;
 }
@@ -81,6 +69,7 @@ export interface ToastMessage {
 export interface LanguageOption {
   code: string;
   name: string;
+  display?: string;
 }
 
 export interface ModeStats {
@@ -92,8 +81,6 @@ export interface ConflictEntry {
   partition: string;
   relative_path: string;
   contending_modules: string[];
-  selected?: string;
-  is_forced?: boolean;
 }
 
 export interface Silo {

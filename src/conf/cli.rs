@@ -1,6 +1,3 @@
-// Copyright 2025 Meta-Hybrid Mount Authors
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
@@ -35,13 +32,6 @@ pub enum Commands {
     ShowConfig,
     #[command(name = "save-config")]
     SaveConfig {
-        #[arg(long)]
-        payload: String,
-    },
-    #[command(name = "save-rules")]
-    SaveRules {
-        #[arg(long)]
-        module: String,
         #[arg(long)]
         payload: String,
     },

@@ -1,9 +1,4 @@
-/**
- * Copyright 2025 Meta-Hybrid Mount Authors
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
-
-import { createSignal, createMemo, createEffect, onMount, Show } from 'solid-js';
+import { createSignal, createMemo, onMount, Show } from 'solid-js';
 import { store } from './lib/store';
 import TopBar from './components/TopBar.tsx';
 import NavBar from './components/NavBar.tsx';
@@ -14,7 +9,6 @@ import ModulesTab from './routes/ModulesTab.tsx';
 import LogsTab from './routes/LogsTab.tsx';
 import InfoTab from './routes/InfoTab.tsx';
 import GranaryTab from './routes/GranaryTab.tsx';
-import WinnowingTab from './routes/WinnowingTab.tsx';
 
 export default function App() {
   const [activeTab, setActiveTab] = createSignal('status');
@@ -29,12 +23,7 @@ export default function App() {
   let touchStartY = 0;
 
   const visibleTabs = createMemo(() => {
-    const tabs = ['status', 'config', 'modules', 'logs', 'granary'];
-    if (store.conflicts.length > 0) {
-      tabs.push('winnowing');
-    }
-    tabs.push('info');
-    return tabs;
+    return ['status', 'config', 'modules', 'logs', 'granary', 'info'];
   });
 
   const baseTranslateX = createMemo(() => {
@@ -99,12 +88,6 @@ export default function App() {
     setDragOffset(0);
   }
 
-  createEffect(() => {
-    if (activeTab() === 'winnowing' && !visibleTabs().includes('winnowing')) {
-      setActiveTab('granary');
-    }
-  });
-
   onMount(async () => {
     try {
       await store.init();
@@ -143,11 +126,6 @@ export default function App() {
             <div class="swipe-page" style={{ width: `${100 / visibleTabs().length}%` }}><div class="page-scroller"><ModulesTab /></div></div>
             <div class="swipe-page" style={{ width: `${100 / visibleTabs().length}%` }}><div class="page-scroller"><LogsTab /></div></div>
             <div class="swipe-page" style={{ width: `${100 / visibleTabs().length}%` }}><div class="page-scroller"><GranaryTab /></div></div>
-            
-            <Show when={store.conflicts.length > 0}>
-                <div class="swipe-page" style={{ width: `${100 / visibleTabs().length}%` }}><div class="page-scroller"><WinnowingTab /></div></div>
-            </Show>
-            
             <div class="swipe-page" style={{ width: `${100 / visibleTabs().length}%` }}><div class="page-scroller"><InfoTab /></div></div>
           </div>
         </main>

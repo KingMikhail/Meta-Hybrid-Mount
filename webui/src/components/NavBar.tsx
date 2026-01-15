@@ -1,8 +1,3 @@
-/**
- * Copyright 2025 Meta-Hybrid Mount Authors
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
-
 import { createMemo, createEffect, onMount, For } from 'solid-js';
 import { store } from '../lib/store';
 import { ICONS } from '../lib/constants';
@@ -25,13 +20,10 @@ export default function NavBar(props: Props) {
     { id: 'modules', icon: ICONS.modules },
     { id: 'logs', icon: ICONS.description },
     { id: 'granary', icon: "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,12.5A2.5,2.5 0 0,1 9.5,10A2.5,2.5 0 0,1 12,7.5A2.5,2.5 0 0,1 14.5,10A2.5,2.5 0 0,1 12,12.5Z" },
-    { id: 'winnowing', icon: "M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" },
     { id: 'info', icon: ICONS.info }
   ];
 
-  const visibleTabs = createMemo(() => 
-    ALL_TABS.filter(t => t.id !== 'winnowing' || store.conflicts.length > 0)
-  );
+  const visibleTabs = createMemo(() => ALL_TABS);
 
   onMount(() => {
     store.loadConflicts();

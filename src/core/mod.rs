@@ -1,6 +1,3 @@
-// Copyright 2025 Meta-Hybrid Mount Authors
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 pub mod executor;
 pub mod granary;
 pub mod inventory;
@@ -9,7 +6,6 @@ pub mod planner;
 pub mod state;
 pub mod storage;
 pub mod sync;
-pub mod winnow;
 
 use std::path::Path;
 

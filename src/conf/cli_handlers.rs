@@ -1,6 +1,3 @@
-// Copyright 2025 Meta-Hybrid Mount Authors
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 use std::path::Path;
 
 use anyhow::{Context, Result, bail};
@@ -11,7 +8,7 @@ use crate::{
         cli::Cli,
         config::{CONFIG_FILE_DEFAULT, Config},
     },
-    core::{executor, granary, inventory, modules, planner, storage, winnow},
+    core::{executor, granary, inventory, modules, planner, storage},
     utils,
 };
 
@@ -94,32 +91,6 @@ pub fn handle_save_config(cli: &Cli, payload: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn handle_save_rules(module: &str, payload: &str) -> Result<()> {
-    utils::validate_module_id(module).with_context(|| format!("Invalid module ID: {}", module))?;
-
-    let json_bytes = (0..payload.len())
-        .step_by(2)
-        .map(|i| u8::from_str_radix(&payload[i..i + 2], 16))
-        .collect::<Result<Vec<u8>, _>>()
-        .context("Failed to decode hex payload")?;
-
-    let _: inventory::ModuleRules =
-        serde_json::from_slice(&json_bytes).context("Invalid rules JSON")?;
-
-    let rules_dir = std::path::Path::new("/data/adb/meta-hybrid/rules");
-
-    std::fs::create_dir_all(rules_dir).context("Failed to create rules directory")?;
-
-    let file_path = rules_dir.join(format!("{}.json", module));
-
-    std::fs::write(&file_path, json_bytes)
-        .with_context(|| format!("Failed to write rules file: {}", file_path.display()))?;
-
-    println!("Rules for module '{}' saved.", module);
-
-    Ok(())
-}
-
 pub fn handle_storage() -> Result<()> {
     storage::print_status().context("Failed to retrieve storage status")
 }
@@ -141,9 +112,7 @@ pub fn handle_conflicts(cli: &Cli) -> Result<()> {
 
     let report = plan.analyze_conflicts();
 
-    let winnowed = winnow::sift_conflicts(report.details, &config.winnowing);
-
-    let json = serde_json::to_string(&winnowed).context("Failed to serialize conflict report")?;
+    let json = serde_json::to_string(&report.details).context("Failed to serialize conflict report")?;
 
     println!("{}", json);
 
@@ -183,7 +152,7 @@ pub fn handle_diagnostics(cli: &Cli) -> Result<()> {
 }
 
 pub fn handle_system_action(cli: &Cli, action: &str, value: Option<&str>) -> Result<()> {
-    let mut config = load_config(cli)?;
+    let config = load_config(cli)?;
 
     match action {
         "granary-list" => {
@@ -216,17 +185,6 @@ pub fn handle_system_action(cli: &Cli, action: &str, value: Option<&str>) -> Res
                 println!("Silo {} restored. Please reboot.", id);
             } else {
                 bail!("Missing Silo ID");
-            }
-        }
-        "winnow-set" => {
-            if let Some(val) = value
-                && let Some((path, id)) = val.split_once(':')
-            {
-                config.winnowing.set_rule(path, id);
-
-                config.save_to_file(CONFIG_FILE_DEFAULT)?;
-
-                println!("Winnowing rule set: {} -> {}", path, id);
             }
         }
         _ => bail!("Unknown action: {}", action),

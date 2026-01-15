@@ -1,12 +1,7 @@
-/**
- * Copyright 2025 Meta-Hybrid Mount Authors
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
-
 import { DEFAULT_CONFIG, PATHS } from './constants';
 import { APP_VERSION } from './constants_gen';
 import { MockAPI } from './api.mock';
-import type { AppConfig, Module, StorageStatus, SystemInfo, DeviceInfo, ModuleRules, ConflictEntry, DiagnosticIssue, Silo } from './types';
+import type { AppConfig, Module, StorageStatus, SystemInfo, DeviceInfo, ConflictEntry, DiagnosticIssue, Silo } from './types';
 
 interface KsuExecResult {
   errno: number;
@@ -62,7 +57,6 @@ interface AppAPI {
   saveConfig: (config: AppConfig) => Promise<void>;
   resetConfig: () => Promise<void>;
   scanModules: (path?: string) => Promise<Module[]>;
-  saveModuleRules: (moduleId: string, rules: ModuleRules) => Promise<void>;
   saveModules: (modules: Module[]) => Promise<void>;
   readLogs: (logPath?: string, lines?: number) => Promise<string>;
   getStorageUsage: () => Promise<StorageStatus>;
@@ -78,7 +72,6 @@ interface AppAPI {
   createSilo: (reason: string) => Promise<void>;
   deleteSilo: (siloId: string) => Promise<void>;
   restoreSilo: (siloId: string) => Promise<void>;
-  setWinnowingRule: (path: string, moduleId: string) => Promise<void>;
 }
 
 const RealAPI: AppAPI = {
@@ -116,14 +109,6 @@ const RealAPI: AppAPI = {
       if (errno === 0 && stdout) return JSON.parse(stdout);
     } catch (e) {}
     return [];
-  },
-  saveModuleRules: async (moduleId: string, rules: ModuleRules): Promise<void> => {
-    if (!ksuExec) throw new Error("No KSU environment");
-    const jsonStr = JSON.stringify(rules);
-    const hexPayload = stringToHex(jsonStr);
-    const cmd = `${PATHS.BINARY} save-rules --module "${moduleId}" --payload "${hexPayload}"`;
-    const { errno, stderr } = await ksuExec(cmd);
-    if (errno !== 0) throw new Error(`Failed to save rules: ${stderr}`);
   },
   saveModules: async (modules: Module[]): Promise<void> => { return; },
   readLogs: async (logPath?: string, lines = 1000): Promise<string> => {
@@ -267,12 +252,6 @@ const RealAPI: AppAPI = {
   restoreSilo: async (siloId: string): Promise<void> => {
     if (!ksuExec) return;
     const cmd = `${PATHS.BINARY} system-action --action granary-restore --value "${siloId}"`;
-    const { errno, stderr } = await ksuExec(cmd);
-    if (errno !== 0) throw new Error(stderr);
-  },
-  setWinnowingRule: async (path: string, moduleId: string): Promise<void> => {
-    if (!ksuExec) return;
-    const cmd = `${PATHS.BINARY} system-action --action winnow-set --value "${path}:${moduleId}"`;
     const { errno, stderr } = await ksuExec(cmd);
     if (errno !== 0) throw new Error(stderr);
   }
