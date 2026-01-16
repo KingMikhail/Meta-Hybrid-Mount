@@ -1,12 +1,7 @@
-## v2.0.6
+## v2.0.61
 
-Changes since v2.0.51:
-* fix: make clippy happy
-* refactor: drop winnowing system entirely
-* Revert "fix: suppress EPERM errors during umount"
-* chore: update license headers [skip ci]
-* fix: suppress EPERM errors during umount
-* fix: make clippy happy
-* feat: deduplicate unmount requests to optimize performance
-* chore(deps): bump zip from 7.0.0 to 7.1.0 (#128)
-* chore(release): bump version to v2.0.51 [skip ci]
+Changes since v2.0.6:
+* chore(deps): bump devalue from 5.6.1 to 5.6.2 in /webui (#129)
+* feat: add save-module-rules command and handler for module rules management
+* fix: remove winnowing config and implement module rules api
+* chore(release): bump version to v2.0.6 [skip ci]
