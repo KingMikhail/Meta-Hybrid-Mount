@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Hybrid Mount Authors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { createMemo, createEffect, onMount, For } from 'solid-js';
 import { store } from '../lib/store';
 import { ICONS } from '../lib/constants';

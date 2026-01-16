@@ -1,3 +1,6 @@
+// Copyright 2026 Hybrid Mount Authors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::{
     fs,
     path::{Path, PathBuf},
