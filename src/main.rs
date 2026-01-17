@@ -151,8 +151,6 @@ fn main() -> Result<()> {
         let plan = planner::generate(&config, &module_list, &config.moduledir)
             .context("Plan generation failed")?;
 
-        plan.print_visuals();
-
         log::info!(">> Analyzing File Conflicts...");
 
         let report = plan.analyze_conflicts();

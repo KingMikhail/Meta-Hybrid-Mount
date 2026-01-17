@@ -40,7 +40,6 @@ fn extract_module_root(partition_path: &Path) -> Option<PathBuf> {
 }
 
 struct OverlayResult {
-    magic_roots: Vec<PathBuf>,
     fallback_ids: Vec<String>,
     success_records: Vec<(PathBuf, String)>,
 }
@@ -100,7 +99,7 @@ pub fn diagnose_plan(plan: &MountPlan) -> Vec<DiagnosticIssue> {
 }
 
 pub fn execute(plan: &MountPlan, config: &config::Config) -> Result<ExecutionResult> {
-    let mut magic_queue = plan.magic_module_paths.clone();
+    let mut magic_queue = plan.magic_module_ids.clone();
 
     let mut global_success_map: HashMap<PathBuf, HashSet<String>> = HashMap::new();
 
@@ -170,7 +169,6 @@ pub fn execute(plan: &MountPlan, config: &config::Config) -> Result<ExecutionRes
                 }
 
                 return OverlayResult {
-                    magic_roots: local_magic,
                     fallback_ids: local_fallback_ids,
                     success_records: Vec::new(),
                 };
@@ -193,7 +191,6 @@ pub fn execute(plan: &MountPlan, config: &config::Config) -> Result<ExecutionRes
             }
 
             OverlayResult {
-                magic_roots: Vec::new(),
                 fallback_ids: Vec::new(),
                 success_records: successes,
             }
@@ -201,8 +198,6 @@ pub fn execute(plan: &MountPlan, config: &config::Config) -> Result<ExecutionRes
         .collect();
 
     for res in overlay_results {
-        magic_queue.extend(res.magic_roots);
-
         for id in res.fallback_ids {
             final_overlay_ids.remove(&id);
         }
@@ -222,12 +217,13 @@ pub fn execute(plan: &MountPlan, config: &config::Config) -> Result<ExecutionRes
     let mut final_magic_ids = Vec::new();
     let mut magic_need_ids = HashSet::new();
 
-    for path in &magic_queue {
-        if let Some(name) = path.file_name() {
+    for id in &magic_queue {
+        /*if let Some(name) = path.file_name() {
             let name_str = name.to_string_lossy().to_string();
             final_magic_ids.push(name_str.clone());
             magic_need_ids.insert(name_str);
-        }
+        }*/
+        magic_need_ids.insert(id.to_string());
     }
 
     if !magic_queue.is_empty() {

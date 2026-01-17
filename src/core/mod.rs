@@ -115,8 +115,6 @@ impl OryzaEngine<ModulesReady> {
             &self.state.handle.mount_point,
         )?;
 
-        plan.print_visuals();
-
         Ok(OryzaEngine {
             config: self.config,
             state: Planned {

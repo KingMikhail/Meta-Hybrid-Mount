@@ -28,7 +28,6 @@ pub struct OverlayOperation {
 #[derive(Debug, Default)]
 pub struct MountPlan {
     pub overlay_ops: Vec<OverlayOperation>,
-    pub magic_module_paths: Vec<PathBuf>,
     pub overlay_module_ids: Vec<String>,
     pub magic_module_ids: Vec<String>,
 }
@@ -94,68 +93,12 @@ impl MountPlan {
 
         ConflictReport { details: conflicts }
     }
-
-    pub fn print_visuals(&self) {
-        if self.overlay_ops.is_empty() && self.magic_module_paths.is_empty() {
-            log::info!(">> Empty plan. Standby mode.");
-
-            return;
-        }
-
-        if !self.overlay_ops.is_empty() {
-            log::info!("[OverlayFS Fusion Sequence]");
-
-            for (i, op) in self.overlay_ops.iter().enumerate() {
-                let is_last_op =
-                    i == self.overlay_ops.len() - 1 && self.magic_module_paths.is_empty();
-
-                let branch = if is_last_op { "╰──" } else { "├──" };
-
-                log::info!("{} [Target: {}] {}", branch, op.partition_name, op.target);
-
-                let prefix = if is_last_op { "    " } else { "│   " };
-
-                for (j, layer) in op.lowerdirs.iter().enumerate() {
-                    let is_last_layer = j == op.lowerdirs.len() - 1;
-
-                    let sub_branch = if is_last_layer {
-                        "╰──"
-                    } else {
-                        "├──"
-                    };
-
-                    let mod_name = crate::utils::extract_module_id(layer)
-                        .map(|n| n.to_string())
-                        .unwrap_or_else(|| "UNKNOWN".into());
-
-                    log::info!("{}{} [Layer] {}", prefix, sub_branch, mod_name);
-                }
-            }
-        }
-
-        if !self.magic_module_paths.is_empty() {
-            log::info!("[Magic Mount Fallback Protocol]");
-
-            for (i, path) in self.magic_module_paths.iter().enumerate() {
-                let is_last = i == self.magic_module_paths.len() - 1;
-
-                let branch = if is_last { "╰──" } else { "├──" };
-
-                let mod_name = path
-                    .file_name()
-                    .map(|n| n.to_string_lossy())
-                    .unwrap_or_else(|| "UNKNOWN".into());
-
-                log::info!("{} [Bind] {}", branch, mod_name);
-            }
-        }
-    }
 }
 
 struct ModuleContribution {
     id: String,
     overlays: Vec<(String, PathBuf)>,
-    magic_path: Option<PathBuf>,
+    magic: bool,
 }
 
 pub fn generate(
@@ -185,7 +128,7 @@ pub fn generate(
             let mut contrib = ModuleContribution {
                 id: module.id.clone(),
                 overlays: Vec::new(),
-                magic_path: None,
+                magic: false,
             };
 
             let mut has_any_action = false;
@@ -217,7 +160,7 @@ pub fn generate(
                             has_any_action = true;
                         }
                         MountMode::Magic => {
-                            contrib.magic_path = Some(content_path.clone());
+                            contrib.magic = true;
 
                             has_any_action = true;
                         }
@@ -233,17 +176,11 @@ pub fn generate(
         .collect();
 
     let mut overlay_groups: HashMap<String, Vec<PathBuf>> = HashMap::new();
-
-    let mut magic_paths = HashSet::new();
-
     let mut overlay_ids = HashSet::new();
-
     let mut magic_ids = HashSet::new();
 
     for contrib in contributions.into_iter().flatten() {
-        if let Some(path) = contrib.magic_path {
-            magic_paths.insert(path);
-
+        if contrib.magic {
             magic_ids.insert(contrib.id.clone());
         }
 
@@ -290,8 +227,6 @@ pub fn generate(
             lowerdirs: layers,
         });
     }
-
-    plan.magic_module_paths = magic_paths.into_iter().collect();
 
     plan.overlay_module_ids = overlay_ids.into_iter().collect();
 
