@@ -14,7 +14,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   partitions: [],
   disable_umount: false,
   allow_umount_coexistence: false,
-  granary: {
+  backup: {
     max_backups: 20,
     retention_days: 0,
   },

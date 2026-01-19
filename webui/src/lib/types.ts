@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-export interface GranaryConfig {
+export interface BackupConfig {
   max_backups: number;
   retention_days: number;
 }
@@ -25,7 +25,7 @@ export interface AppConfig {
   disable_umount: boolean;
   allow_umount_coexistence: boolean;
   logfile?: string;
-  granary: GranaryConfig;
+  backup: BackupConfig;
 }
 
 export type MountMode = "overlay" | "magic" | "ignore";

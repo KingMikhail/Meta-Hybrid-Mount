@@ -19,7 +19,7 @@ import "@material/web/ripple/ripple.js";
 import "@material/web/dialog/dialog.js";
 import "@material/web/button/text-button.js";
 import "@material/web/switch/switch.js";
-import type { OverlayMode, AppConfig } from "../lib/types";
+import type { OverlayMode, AppConfig, BackupConfig } from "../lib/types";
 
 export default function ConfigTab() {
   const [initialConfigStr, setInitialConfigStr] = createSignal("");
@@ -63,15 +63,15 @@ export default function ConfigTab() {
     value: AppConfig[K],
   ) {
     store.config = { ...store.config, [key]: value };
-    if (key === "granary") {
+    if (key === "backup") {
       // ignore
     }
   }
 
-  function updateGranary(key: keyof AppConfig["granary"], value: number) {
+  function updateBackup(key: keyof BackupConfig, value: number) {
     store.config = {
       ...store.config,
-      granary: { ...store.config.granary, [key]: value },
+      backup: { ...store.config.backup, [key]: value },
     };
   }
 
@@ -328,7 +328,7 @@ export default function ConfigTab() {
           </div>
         </section>
 
-        <Show when={store.config.granary}>
+        <Show when={store.config.backup}>
           <section class="config-group">
             <div class="config-card">
               <div class="card-header">
@@ -367,9 +367,9 @@ export default function ConfigTab() {
                     min="1"
                     max="100"
                     aria-label={store.L.config?.maxBackups || "Max Backups"}
-                    value={store.config.granary.max_backups}
+                    value={store.config.backup.max_backups}
                     onInput={(e) =>
-                      updateGranary(
+                      updateBackup(
                         "max_backups",
                         parseInt(e.currentTarget.value) || 0,
                       )
@@ -396,9 +396,9 @@ export default function ConfigTab() {
                     aria-label={
                       store.L.config?.retentionDays || "Retention Days"
                     }
-                    value={store.config.granary.retention_days}
+                    value={store.config.backup.retention_days}
                     onInput={(e) =>
-                      updateGranary(
+                      updateBackup(
                         "retention_days",
                         parseInt(e.currentTarget.value) || 0,
                       )
