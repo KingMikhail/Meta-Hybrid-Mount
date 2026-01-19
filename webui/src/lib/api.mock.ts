@@ -44,7 +44,6 @@ export const MockAPI = {
     await delay(500);
     console.log("[Mock] Config reset to defaults");
   },
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async scanModules(_dir: string): Promise<Module[]> {
     await delay(600);
     return [
@@ -93,8 +92,7 @@ export const MockAPI = {
     await delay(400);
     console.log(`[Mock] Rules saved for ${moduleId}:`, rules);
   },
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async saveModules(_modules: Module[]): Promise<void> {
+  async saveModules(modules: Module[]): Promise<void> {
     console.warn("[Mock] saveModules is deprecated");
   },
   async readLogs(): Promise<string> {
