@@ -14,7 +14,7 @@ use rustix::{
 use serde::Serialize;
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
-use crate::try_umount::send_umountable;
+use crate::mount::umount_mgr::send_umountable;
 use crate::{
     core::state::RuntimeState,
     defs,
@@ -154,7 +154,7 @@ pub fn setup(
     if use_erofs && is_erofs_supported() {
         let erofs_path = img_path.with_extension("erofs");
 
-        utils::mount_tmpfs(mnt_base, mount_source)?;
+        crate::sys::mount::mount_tmpfs(mnt_base, mount_source)?;
 
         make_private(mnt_base);
 
@@ -195,7 +195,7 @@ pub fn setup(
 }
 
 fn try_setup_tmpfs(target: &Path, mount_source: &str) -> Result<bool> {
-    if utils::mount_tmpfs(target, mount_source).is_ok() {
+    if crate::sys::mount::mount_tmpfs(target, mount_source).is_ok() {
         if utils::is_overlay_xattr_supported().unwrap_or(false) {
             log::info!("Tmpfs mounted and supports xattrs (CONFIG_TMPFS_XATTR=y).");
             return Ok(true);
@@ -242,7 +242,7 @@ fn setup_ext4_image(target: &Path, img_path: &Path, moduledir: &Path) -> Result<
 
     ensure_dir_exists(target)?;
     if overlay_utils::AutoMountExt4::try_new(img_path, target, false).is_err() {
-        if utils::repair_image(img_path).is_ok() {
+        if crate::sys::mount::repair_image(img_path).is_ok() {
             overlay_utils::AutoMountExt4::try_new(img_path, target, false)
                 .context("Failed to mount modules.img after repair")
                 .map(|_| ())?;
@@ -303,7 +303,7 @@ pub fn print_status() -> Result<()> {
 
     let mut supported_modes = vec!["ext4".to_string(), "erofs".to_string()];
     let check_dir = Path::new(defs::XATTR_CHECK_DIR);
-    if utils::mount_tmpfs(check_dir, "mh_check").is_ok() {
+    if crate::sys::mount::mount_tmpfs(check_dir, "mh_check").is_ok() {
         if utils::is_overlay_xattr_supported().unwrap_or(false) {
             supported_modes.insert(0, "tmpfs".to_string());
         }

@@ -14,7 +14,10 @@ use rustix::{
     },
 };
 
-use crate::{mount::overlayfs::utils::umount_dir, try_umount::send_umountable};
+use crate::{
+    mount::{overlayfs::utils::umount_dir, umount_mgr::send_umountable},
+    sys::mount::mount_tmpfs,
+};
 
 const MAX_LOWERDIR_COUNT: usize = 128;
 const MAX_ARG_LENGTH: usize = 3000;

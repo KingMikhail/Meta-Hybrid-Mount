@@ -1,6 +1,3 @@
-// Copyright 2026 Hybrid Mount Developers
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -85,7 +82,7 @@ fn default_moduledir() -> PathBuf {
 }
 
 fn default_mountsource() -> String {
-    crate::utils::mount::detect_mount_source()
+    crate::sys::mount::detect_mount_source()
 }
 
 fn deserialize_partitions_flexible<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>

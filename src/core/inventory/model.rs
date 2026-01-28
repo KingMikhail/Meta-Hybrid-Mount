@@ -13,14 +13,8 @@ use extattr::lgetxattr;
 use regex_lite::Regex;
 use serde::Serialize;
 
-use crate::{
-    conf::config::Config,
-    core::{
-        inventory::{self, MountMode},
-        state::RuntimeState,
-    },
-    defs, utils,
-};
+use super::scanner::{self as inventory, MountMode};
+use crate::{conf::config::Config, core::state::RuntimeState, defs, utils};
 
 static MODULE_PROP_REGEX: OnceLock<Regex> = OnceLock::new();
 

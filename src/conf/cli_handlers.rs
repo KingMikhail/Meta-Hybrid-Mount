@@ -8,8 +8,15 @@ use crate::{
         cli::{Cli, PoaceaeAction},
         config::Config,
     },
-    core::{granary, inventory, modules, planner, poaceae, storage},
-    defs, utils,
+    core::{
+        inventory,
+        inventory::model as modules,
+        ops::{backup as granary, planner},
+        storage,
+    },
+    defs,
+    sys::poaceae,
+    utils,
 };
 
 #[derive(Serialize)]

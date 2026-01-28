@@ -1,6 +1,3 @@
-// Copyright 2026 Hybrid Mount Authors
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 use std::{
     collections::HashMap,
     fs,
@@ -32,7 +29,6 @@ pub struct ModuleRules {
 
 impl ModuleRules {
     pub fn load(module_dir: &Path, module_id: &str, cfg: &config::Config) -> Self {
-        // Fix: Use struct update syntax to satisfy clippy::field_reassign_with_default
         let mut rules = ModuleRules {
             default_mode: match cfg.default_mode {
                 config::DefaultMode::Overlay => MountMode::Overlay,
@@ -41,7 +37,6 @@ impl ModuleRules {
             ..Default::default()
         };
 
-        // Helper struct for partial loading to avoid overwriting defaults with serde defaults
         #[derive(Deserialize)]
         struct PartialRules {
             default_mode: Option<MountMode>,

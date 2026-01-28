@@ -42,15 +42,14 @@ pub fn ensure_recovery_state() -> Result<RecoveryStatus> {
         .context("Failed to lock boot counter")?;
 
     let mut content = String::new();
-    // Read directly from the File struct, ignoring errors if empty
     let _ = file.read_to_string(&mut content);
 
     let mut count = content.trim().parse::<u8>().unwrap_or(0);
 
     count += 1;
 
-    file.rewind()?; // Rewind to start before writing
-    file.set_len(0)?; // Truncate file
+    file.rewind()?;
+    file.set_len(0)?;
     write!(file, "{}", count)?;
     file.sync_all()
         .context("Failed to sync boot counter to disk")?;

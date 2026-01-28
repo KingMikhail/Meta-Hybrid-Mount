@@ -2,11 +2,10 @@ mod conf;
 mod core;
 mod defs;
 mod mount;
-#[cfg(any(target_os = "linux", target_os = "android"))]
-mod try_umount;
+mod sys;
 mod utils;
 
-use core::{MountController, granary};
+use core::{MountController, ops::backup as granary};
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
