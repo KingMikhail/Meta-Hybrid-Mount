@@ -205,48 +205,45 @@ fn try_setup_tmpfs(target: &Path, mount_source: &str) -> Result<bool> {
 }
 
 fn setup_ext4_image(target: &Path, img_path: &Path, moduledir: &Path) -> Result<StorageHandle> {
-    if !img_path.exists() || check_image(img_path).is_err() {
-        log::info!("Modules image missing or corrupted. Fallback to creation.");
-
-        if img_path.exists()
-            && let Err(e) = fs::remove_file(img_path)
-        {
+    if img_path.exists() {
+        log::info!("Removing old ext4 image for fresh creation...");
+        if let Err(e) = fs::remove_file(img_path) {
             log::warn!("Failed to remove old image: {}", e);
         }
-
-        log::info!("- Preparing image");
-
-        let total_size = calculate_total_size(moduledir)?;
-        log::info!(
-            "Total size of files in '{}': {} bytes",
-            moduledir.display(),
-            total_size,
-        );
-
-        let min_size = 64 * 1024 * 1024;
-        let grow_size = std::cmp::max((total_size as f64 * 1.2) as u64, min_size);
-
-        fs::File::create(img_path)
-            .context("Failed to create ext4 image file")?
-            .set_len(grow_size)
-            .context("Failed to extend ext4 image")?;
-
-        let result = Command::new("mkfs.ext4")
-            .arg("-b")
-            .arg("1024")
-            .arg(img_path)
-            .stdout(std::process::Stdio::piped())
-            .output()?;
-
-        ensure!(
-            result.status.success(),
-            "Failed to format ext4 image: {}",
-            String::from_utf8(result.stderr)?
-        );
-
-        log::info!("Checking Image");
-        check_image(img_path)?;
     }
+
+    log::info!("- Preparing image");
+
+    let total_size = calculate_total_size(moduledir)?;
+    log::info!(
+        "Total size of files in '{}': {} bytes",
+        moduledir.display(),
+        total_size,
+    );
+
+    let min_size = 64 * 1024 * 1024;
+    let grow_size = std::cmp::max((total_size as f64 * 1.2) as u64, min_size);
+
+    fs::File::create(img_path)
+        .context("Failed to create ext4 image file")?
+        .set_len(grow_size)
+        .context("Failed to extend ext4 image")?;
+
+    let result = Command::new("mkfs.ext4")
+        .arg("-b")
+        .arg("1024")
+        .arg(img_path)
+        .stdout(std::process::Stdio::piped())
+        .output()?;
+
+    ensure!(
+        result.status.success(),
+        "Failed to format ext4 image: {}",
+        String::from_utf8(result.stderr)?
+    );
+
+    log::info!("Checking Image");
+    check_image(img_path)?;
 
     utils::lsetfilecon(img_path, "u:object_r:ksu_file:s0").ok();
 

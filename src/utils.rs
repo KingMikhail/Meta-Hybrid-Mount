@@ -569,6 +569,14 @@ pub fn create_erofs_image(src_dir: &Path, image_path: &Path) -> Result<()> {
 
     log::info!("Packing EROFS image: {}", image_path.display());
 
+    if image_path.exists() {
+        if let Err(e) = fs::remove_file(image_path) {
+            log::warn!("Failed to remove old EROFS image, mkfs might fail: {}", e);
+        } else {
+            log::debug!("Removed old EROFS image for fresh creation.");
+        }
+    }
+
     let output = Command::new(cmd_name)
         .arg("-z")
         .arg("lz4hc")
