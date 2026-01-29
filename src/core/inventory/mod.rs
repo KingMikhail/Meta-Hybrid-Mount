@@ -3,4 +3,4 @@ pub mod scanner;
 
 pub use scanner::*;
 
-pub use crate::conf::config::{ModuleRules, MountMode};
+pub use crate::conf::config::MountMode;
