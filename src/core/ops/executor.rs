@@ -111,10 +111,6 @@ where
         if matches!(config.overlay_mode, config::OverlayMode::Erofs) {
             if magic_ws_path.exists() {
                 crate::sys::mount::mount_tmpfs(&magic_ws_path, "magic_ws")?;
-                #[cfg(any(target_os = "linux", target_os = "android"))]
-                if let Err(e) = umount_mgr::send_umountable(&magic_ws_path) {
-                    log::warn!("Failed to schedule unmount for magic_ws: {}", e);
-                }
             } else {
                 log::error!("Magic Mount anchor missing in EROFS image!");
             }
