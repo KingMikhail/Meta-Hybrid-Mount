@@ -161,7 +161,6 @@ fn build_full(release: bool, skip_webui: bool, target_arch: Option<Arch>) -> Res
         fs::remove_file(gitignore)?;
     }
     println!(":: Injecting version: {}", version);
-    update_module_prop(&stage_dir.join("module.prop"), &version)?;
     println!(":: Creating Zip...");
     let zip_file = output_dir.join(format!("Meta-Hybrid-{}.zip", version));
     let zip_options = FileOptions::default()
@@ -260,34 +259,4 @@ fn cal_git_code() -> Result<i32> {
     )?
     .trim()
     .parse::<i32>()?)
-}
-
-fn update_module_prop(path: &Path, version: &str) -> Result<()> {
-    if !path.exists() {
-        return Ok(());
-    }
-    let content = fs::read_to_string(path)?;
-    let mut new_lines = Vec::new();
-    let code = if let Ok(env_code) = env::var("META_HYBRID_CODE") {
-        env_code
-    } else {
-        use std::{
-            collections::hash_map::DefaultHasher,
-            hash::{Hash, Hasher},
-        };
-        let mut hasher = DefaultHasher::new();
-        version.hash(&mut hasher);
-        ((hasher.finish() % 100000) as u32).to_string()
-    };
-    for line in content.lines() {
-        if line.starts_with("version=") {
-            new_lines.push(format!("version={}", version));
-        } else if line.starts_with("versionCode=") {
-            new_lines.push(format!("versionCode={}", code));
-        } else {
-            new_lines.push(line.to_string());
-        }
-    }
-    fs::write(path, new_lines.join("\n"))?;
-    Ok(())
 }
