@@ -32,12 +32,12 @@ export const MockAPI = {
         name: "Example Module",
         version: "1.0.0",
         author: "Developer",
-        description: "This is a mock module for testing.",
-        mode: "magic",
+        description: "This is a Mock Module for Testing",
+        mode: "Magic",
         is_mounted: true,
         rules: {
-          default_mode: "magic",
-          paths: { "system/fonts": "overlay" },
+          default_mode: "Magic",
+          paths: { "System/Fonts": "Overlay" },
         },
       },
       {
@@ -45,11 +45,11 @@ export const MockAPI = {
         name: "System UI Overlay",
         version: "2.5",
         author: "Google",
-        description: "Changes system colors.",
-        mode: "auto",
+        description: "Changes System Colors",
+        mode: "Auto",
         is_mounted: true,
         rules: {
-          default_mode: "overlay",
+          default_mode: "Overlay",
           paths: {},
         },
       },
@@ -58,11 +58,11 @@ export const MockAPI = {
         name: "Unmounted Module",
         version: "0.1",
         author: "Tester",
-        description: "This module is not mounted.",
-        mode: "ignore",
+        description: "This Module is Not Mounted",
+        mode: "Ignore",
         is_mounted: false,
         rules: {
-          default_mode: "ignore",
+          default_mode: "Ignore",
           paths: {},
         },
       },
@@ -88,7 +88,7 @@ export const MockAPI = {
   async getStorageUsage(): Promise<StorageStatus> {
     await delay(300);
     return {
-      type: "erofs",
+      type: "Erofs",
     };
   },
   async getSystemInfo(): Promise<SystemInfo> {
