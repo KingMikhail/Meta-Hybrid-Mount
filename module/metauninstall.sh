@@ -1,5 +1,5 @@
 
-MNT_DIR="/data/adb/hybrid-mount/mnt"
+MNT_DIR="/data/adb/Hybrid-Mount/mnt"
 if [ -z "$MODULE_ID" ]; then
     exit 0
 fi
