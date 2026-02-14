@@ -19,7 +19,7 @@ struct CargoConfig {
 
 #[derive(Deserialize)]
 struct Metadata {
-    hybrid_mount: Update,
+    Hybrid-Mount: Update,
 }
 
 #[derive(Deserialize)]
@@ -97,11 +97,11 @@ fn gen_module_prop(data: &CargoConfig) -> Result<()> {
         .open("module/module.prop")?;
 
     writeln!(file, "id={id}")?;
-    writeln!(file, "name={}", package.metadata.hybrid_mount.name)?;
+    writeln!(file, "name={}", package.metadata.Hybrid-Mount.name)?;
     writeln!(file, "version=v{}", version.trim())?;
     writeln!(file, "versionCode={version_code}")?;
     writeln!(file, "author={author}")?;
-    writeln!(file, "updateJson={}", package.metadata.hybrid_mount.update)?;
+    writeln!(file, "updateJson={}", package.metadata.Hybrid-Mount.update)?;
     writeln!(file, "description={}", package.description)?;
     writeln!(file, "metamodule=1")?;
     Ok(())
