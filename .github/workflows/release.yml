@@ -86,7 +86,7 @@ jobs:
         run: |
           cargo xtask build --release
 
-            - name: Generate Changelog
+      - name: Generate Changelog
         id: meta
         run: |
           ZIP_FILE=$(cd output && ls *.zip | head -n 1)
