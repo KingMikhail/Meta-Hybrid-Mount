@@ -80,18 +80,18 @@ const RealAPI: AppAPI = {
     return DEFAULT_CONFIG;
   },
   saveConfig: async (config: AppConfig): Promise<void> => {
-    if (!ksuExec) throw new Error("No KSU environment");
+    if (!ksuExec) throw new Error("No KSU Environment");
     const jsonStr = JSON.stringify(config);
     const hexPayload = stringToHex(jsonStr);
     const cmd = `${PATHS.BINARY} save-config --payload ${hexPayload}`;
     const { errno, stderr } = await ksuExec(cmd);
-    if (errno !== 0) throw new Error(`Failed to save config: ${stderr}`);
+    if (errno !== 0) throw new Error(`Failed to Save Config: ${stderr}`);
   },
   resetConfig: async (): Promise<void> => {
     if (!ksuExec) throw new Error("No KSU environment");
     const cmd = `${PATHS.BINARY} gen-config`;
     const { errno, stderr } = await ksuExec(cmd);
-    if (errno !== 0) throw new Error(`Failed to reset config: ${stderr}`);
+    if (errno !== 0) throw new Error(`Failed to Reset Config: ${stderr}`);
   },
   scanModules: async (_path?: string): Promise<Module[]> => {
     if (!ksuExec) return [];
