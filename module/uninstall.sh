@@ -4,6 +4,6 @@
 # Cleanup script for metamodule removal
 ############################################
 
-rm -rf "/data/adb/hybrid-mount"
+rm -rf "/data/adb/Hybrid-Mount"
 
 exit 0
