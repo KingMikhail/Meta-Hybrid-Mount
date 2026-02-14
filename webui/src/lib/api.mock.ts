@@ -96,7 +96,7 @@ export const MockAPI = {
     return {
       kernel: "Linux localhost 5.15.0 #1 SMP PREEMPT",
       selinux: "Enforcing",
-      mountBase: "/data/adb/meta-hybrid/mnt",
+      mountBase: "/data/adb/Meta-Hybrid/mnt",
       activeMounts: ["system", "product"],
       zygisksuEnforce: "1",
       tmpfs_xattr_supported: false,
